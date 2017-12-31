@@ -1010,6 +1010,9 @@ void CodeTextEditor::_text_editor_gui_input(const Ref<InputEvent> &p_event) {
 			if (ED_IS_SHORTCUT("script_editor/reset_zoom", p_event)) {
 				_reset_zoom();
 			}
+			if (ED_IS_SHORTCUT("script_editor/duplicate_lines", p_event)) {
+				_duplicate_lines();
+			}
 		}
 	}
 }
@@ -1036,6 +1039,45 @@ void CodeTextEditor::_reset_zoom() {
 		EditorSettings::get_singleton()->set("interface/editor/source_font_size", 14);
 		font->set_size(14);
 	}
+}
+
+void CodeTextEditor::_duplicate_lines() {
+	bool selection_was_active = text_editor->is_selection_active();
+
+	int cursor_line = text_editor->cursor_get_line();
+	int cursor_column = text_editor->cursor_get_column();
+
+	int line, line_end;
+	int sel_column, sel_column_end;
+
+	if (selection_was_active) {
+		line = text_editor->get_selection_from_line();
+		line_end = text_editor->get_selection_to_line();
+		sel_column = text_editor->get_selection_from_column();
+		sel_column_end = text_editor->get_selection_to_column();
+	} else {
+		line = line_end = cursor_line;
+	}
+
+	String copy_text;
+
+	for (int i = line; i <= line_end; ++i) {
+		copy_text += "\n" + text_editor->get_line(i);
+	}
+
+	text_editor->begin_complex_operation();
+	text_editor->cursor_set_line(line_end);
+	text_editor->cursor_set_column(text_editor->get_line(line_end).length());
+	text_editor->deselect();
+	text_editor->insert_text_at_cursor(copy_text);
+
+	if (selection_was_active) {
+		text_editor->select(line_end + 1, sel_column, line_end * 2 - line + 1, sel_column_end);
+		text_editor->cursor_set_line(line_end - line + cursor_line + 1);
+	}
+
+	text_editor->cursor_set_column(cursor_column);
+	text_editor->end_complex_operation();
 }
 
 void CodeTextEditor::_line_col_changed() {
@@ -1217,6 +1259,7 @@ CodeTextEditor::CodeTextEditor() {
 	ED_SHORTCUT("script_editor/zoom_in", TTR("Zoom In"), KEY_MASK_CMD | KEY_EQUAL);
 	ED_SHORTCUT("script_editor/zoom_out", TTR("Zoom Out"), KEY_MASK_CMD | KEY_MINUS);
 	ED_SHORTCUT("script_editor/reset_zoom", TTR("Reset Zoom"), KEY_MASK_CMD | KEY_0);
+	ED_SHORTCUT("script_editor/duplicate_lines", TTR("Duplicate Lines"), KEY_MASK_CMD | KEY_D);
 
 	find_replace_bar = memnew(FindReplaceBar);
 	add_child(find_replace_bar);

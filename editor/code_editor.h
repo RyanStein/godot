@@ -220,6 +220,7 @@ class CodeTextEditor : public VBoxContainer {
 	void _zoom_out();
 	void _zoom_changed();
 	void _reset_zoom();
+	void _duplicate_lines();
 
 	CodeTextEditorCodeCompleteFunc code_complete_func;
 	void *code_complete_ud;
